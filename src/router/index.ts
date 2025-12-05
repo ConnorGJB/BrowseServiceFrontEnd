@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import ListCatalogueItem from '@/views/ListCatalogueItem.vue';
+import ListCatalogue from '@/views/ListCatalogue.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -7,7 +7,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: ListCatalogueItem,
+      component: ListCatalogue,
     },
   ],
 });

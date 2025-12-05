@@ -1,22 +1,22 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { useReviews } from '@/composables/use-reviews';
-import ReviewCard from '@/components/ReviewCard.vue';
-import AddReviewForm from '@/components/AddReviewForm.vue';
-import type { AddReviewCommand } from '@/app/add-review';
+import { useCatalogueItems } from '@/composables/use-catalogueItems';
+import CatalogueItemCard from '@/components/CatalogueItemCard.vue';
+import AddCatalogueItemForm from '@/components/AddCatalogueItemForm.vue';
+import type { AddCatalogueItemCommand } from '@/app/add-catalogueItem';
 
 const {
-  reviews,
+  catalogueItems,
   totalCount,
   loading,
   adding,
   error,
-  fetchReviews,
-  addReview,
-} = useReviews();
+  fetchCatalogueItems,
+  addCatalogueItem,
+} = useCatalogueItems();
 
 const showForm = ref(false);
-const formRef = ref<InstanceType<typeof AddReviewForm> | null>(null);
+const formRef = ref<InstanceType<typeof AddCatalogueItemForm> | null>(null);
 const successMessage = ref<string | null>(null);
 
 const handleToggleForm = () => {
@@ -27,17 +27,16 @@ const handleToggleForm = () => {
   }
 };
 
-const handleSubmit = async (command: AddReviewCommand) => {
+const handleSubmit = async (command: AddCatalogueItemCommand) => {
   successMessage.value = null;
-  await addReview(command);
+  await addCatalogueItem(command);
 
   if (!error.value) {
-    successMessage.value = 'Review added successfully!';
+    successMessage.value = 'Item added successfully!';
     showForm.value = false;
     if (formRef.value) {
       formRef.value.resetForm();
     }
-    // Auto-hide success message after 3 seconds
     setTimeout(() => {
       successMessage.value = null;
     }, 3000);
@@ -53,21 +52,16 @@ const handleCancel = () => {
 };
 
 onMounted(() => {
-  // Initial load
-  fetchReviews();
+  fetchCatalogueItems();
 });
 </script>
 
 <template>
   <section class="page">
     <header class="page__header">
-      <h1>Reviews</h1>
-      <button
-        @click="handleToggleForm"
-        class="btn btn--add"
-        :disabled="loading"
-      >
-        {{ showForm ? 'Cancel' : '+ Add Review' }}
+      <h1>Catalogue Items</h1>
+      <button @click="handleToggleForm" class="btn btn--add" :disabled="loading">
+        {{ showForm ? 'Cancel' : '+ Add Item' }}
       </button>
     </header>
 
@@ -76,13 +70,9 @@ onMounted(() => {
       <span v-else>None yet</span>
     </div>
 
-    <!-- Success Message -->
-    <div v-if="successMessage" class="success-message">
-      {{ successMessage }}
-    </div>
+    <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
 
-    <!-- Add Review Form -->
-    <AddReviewForm
+    <AddCatalogueItemForm
       v-if="showForm"
       ref="formRef"
       :is-submitting="adding"
@@ -94,12 +84,12 @@ onMounted(() => {
     <div v-if="loading" class="state">Loading…</div>
     <div v-else-if="error" class="state state--error">{{ error }}</div>
     <div v-else>
-      <ul v-if="reviews.length" class="grid" role="list">
-        <li v-for="r in reviews" :key="r.id" class="grid__item">
-          <ReviewCard :review="r" />
+      <ul v-if="catalogueItems.length" class="grid" role="list">
+        <li v-for="it in catalogueItems" :key="it.id" class="grid__item">
+          <CatalogueItemCard :item="it" />
         </li>
       </ul>
-      <p v-else class="state">No reviews yet. Be the first!</p>
+      <p v-else class="state">No items yet. Add the first catalogue item.</p>
     </div>
   </section>
 </template>

@@ -1,13 +1,13 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
-import { buildReviewUses, REVIEWS_KEY } from './config/appServices';
+import { buildCatalogueItemUses, CATALOGUE_ITEMS_KEY } from './config/appServices';
 
 const app = createApp(App);
 
 app.use(router);
 
-// Provide bound review use cases to the app's DI container
-app.provide(REVIEWS_KEY, buildReviewUses());
+// Provide bound catalogue use cases to the app's DI container
+app.provide(CATALOGUE_ITEMS_KEY, buildCatalogueItemUses());
 
 app.mount('#app');
