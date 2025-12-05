@@ -1,73 +1,72 @@
-import type { ReviewService } from '../app/review-service';
-import { listReviews } from '../app/list-reviews';
-import type { ListReviewsResult } from '../app/list-reviews';
-import { addReview } from '../app/add-review';
-import type { AddReviewCommand, AddReviewResult } from '../app/add-review';
-import { FakeReviewService } from '../infra/fake-review-service';
-import { HttpReviewService } from '../infra/http-review-service';
-import { seedReviews } from '../seed/reviews';
+import type { CatalogueService } from '../app/catalogue-service';
+import { listCatalogueItems } from '../app/list-catalogue';
+import type { ListCatalogueItemsResult } from '../app/list-catalogue';
+import { addCatalogueItem } from '../app/add-catalogueItem';
+import type { AddCatalogueItemCommand, AddCatalogueItemResult } from '../app/add-catalogueItem';
+import { FakeCatalogueService } from '../infra/fake-catalogue-service';
+import { HttpCatalogueService } from '../infra/http-catalogue-service';
 
-// Lazy singleton for the app's ReviewService implementation.
-let _reviewService: ReviewService | undefined;
+// Lazy singleton for the app's CatalogueService implementation.
+let _catalogueService: CatalogueService | undefined;
 
 // Resolve which implementation to use based on env.
-// - VITE_REVIEWS_SERVICE: 'fake' | 'http' (optional)
-// - VITE_REVIEWS_BASE_URL: string (optional)
+// - VITE_CATALOGUE_SERVICE: 'fake' | 'http' (optional)
+// - VITE_CATALOGUE_BASE_URL: string (optional)
 // - VITE_USE_SEED_DATA: 'true' | 'false' (optional, defaults to false)
-function createReviewServiceFromEnv(): ReviewService {
+function createCatalogueServiceFromEnv(): CatalogueService {
   const env = import.meta.env as Record<string, string | undefined>;
-  const kind = (env.VITE_REVIEWS_SERVICE || '').toLowerCase();
-  const baseUrl = env.VITE_REVIEWS_BASE_URL;
+  const kind = (env.VITE_CATALOGUE_SERVICE || '').toLowerCase();
+  const baseUrl = env.VITE_CATALOGUE_BASE_URL;
   const useSeedData = env.VITE_USE_SEED_DATA === 'true';
 
   if (kind === 'fake') {
-    return new FakeReviewService(useSeedData ? seedReviews : []);
+    return new FakeCatalogueService(useSeedData ? [] : []);
   }
-  if (kind === 'http') return new HttpReviewService({ baseUrl });
+  if (kind === 'http') return new HttpCatalogueService({ baseUrl });
 
   // Auto-detect: if a base URL is provided, prefer HTTP; otherwise use fake.
-  if (baseUrl) return new HttpReviewService({ baseUrl });
-  return new FakeReviewService(useSeedData ? seedReviews : []);
+  if (baseUrl) return new HttpCatalogueService({ baseUrl });
+  return new FakeCatalogueService([]);
 }
 
-export function getReviewService(): ReviewService {
-  if (!_reviewService) {
-    _reviewService = createReviewServiceFromEnv();
+export function getCatalogueService(): CatalogueService {
+  if (!_catalogueService) {
+    _catalogueService = createCatalogueServiceFromEnv();
   }
-  return _reviewService;
+  return _catalogueService;
 }
 
 // Optional: allow overriding in tests or specialized bootstraps
-export function setReviewService(service: ReviewService): void {
-  _reviewService = service;
+export function setCatalogueService(service: CatalogueService): void {
+  _catalogueService = service;
 }
 
 // Factories that return use case functions bound to the resolved service
-export function makeListReviews(): () => Promise<ListReviewsResult> {
-  const service = getReviewService();
-  return () => listReviews(service);
+export function makeListCatalogueItems(): () => Promise<ListCatalogueItemsResult> {
+  const service = getCatalogueService();
+  return () => listCatalogueItems(service);
 }
 
-export function makeAddReview(): (
-  command: AddReviewCommand,
-) => Promise<AddReviewResult> {
-  const service = getReviewService();
-  return (command: AddReviewCommand) => addReview(service, command);
+export function makeAddCatalogueItem(): (
+  command: AddCatalogueItemCommand,
+) => Promise<AddCatalogueItemResult> {
+  const service = getCatalogueService();
+  return (command: AddCatalogueItemCommand) => addCatalogueItem(service, command);
 }
 
-// Public contract returned by buildReviewUses
-export type Reviews = {
-  listReviews: () => Promise<ListReviewsResult>;
-  addReview: (command: AddReviewCommand) => Promise<AddReviewResult>;
+// Public contract returned by buildCatalogueItemUses
+export type CatalogueItems = {
+  listCatalogueItems: () => Promise<ListCatalogueItemsResult>;
+  addCatalogueItem: (command: AddCatalogueItemCommand) => Promise<AddCatalogueItemResult>;
 };
 
 // Compound factory returning both bound use case functions
-export function buildReviewUses(): Reviews {
+export function buildCatalogueItemUses(): CatalogueItems {
   return {
-    listReviews: makeListReviews(),
-    addReview: makeAddReview(),
+    listCatalogueItems: makeListCatalogueItems(),
+    addCatalogueItem: makeAddCatalogueItem(),
   };
 }
 
 // Centralized DI key used by provider and composable
-export const REVIEWS_KEY = 'Reviews' as const;
+export const CATALOGUE_ITEMS_KEY = 'CatalogueItems' as const;

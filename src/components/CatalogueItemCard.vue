@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Review } from '@/app/review-service';
+import type { CatalogueItem } from '@/app/catalogue-service';
 
 const props = defineProps<{
-  review: Review;
+  item: CatalogueItem;
 }>();
 
 function formatDate(d: Date): string {
@@ -23,27 +23,32 @@ function formatDate(d: Date): string {
 <template>
   <article class="card">
     <header class="card__header">
-      <div class="card__title">{{ props.review.title }}</div>
+      <div class="card__title">{{ props.item.name }}</div>
       <div
         class="card__rating"
-        :aria-label="`Rating: ${props.review.rating} / 5`"
+        :aria-label="`Rating: ${props.item.rating} / 5`"
       >
         <span
           v-for="i in 5"
           :key="i"
           class="star"
-          :class="{ filled: i <= props.review.rating }"
+          :class="{ filled: i <= props.item.rating }"
           >★</span
         >
-        <span class="sr-only">{{ props.review.rating }} out of 5</span>
+        <span class="sr-only">{{ props.item.rating }} out of 5</span>
       </div>
     </header>
-    <p class="card__comment">{{ props.review.comment }}</p>
+    <div class="card__details">
+      <p><strong>Category:</strong> {{ props.item.category }}</p>
+      <p><strong>Total Quantity:</strong> {{ props.item.totalQuantity }}</p>
+      <p><strong>Reserved:</strong> {{ props.item.reservedQuantity }}</p>
+      <p v-if="props.item.status"><strong>Status:</strong> {{ props.item.status }}</p>
+    </div>
     <footer class="card__footer">
-      <time :dateTime="props.review.createdAt.toISOString()">{{
-        formatDate(props.review.createdAt)
+      <time :dateTime="props.item.createdAt">{{
+        formatDate(new Date(props.item.createdAt))
       }}</time>
-      <span class="card__id">#{{ props.review.id }}</span>
+      <span class="card__id">#{{ props.item.id }}</span>
     </footer>
   </article>
 </template>
@@ -78,10 +83,14 @@ function formatDate(d: Date): string {
 .star.filled {
   opacity: 1;
 }
-.card__comment {
+.card__details {
   color: #374151; /* gray-700 */
   line-height: 1.5;
-  margin: 0.25rem 0 0.75rem;
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+}
+.card__details p {
+  margin: 0.25rem 0;
 }
 .card__footer {
   display: flex;

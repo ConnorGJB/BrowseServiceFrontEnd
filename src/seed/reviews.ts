@@ -1,4 +1,4 @@
-import type { Review } from '../app/review-service';
+import type { Review } from '../app/catalogue-service';
 
 export const seedReviews: Review[] = [
   {

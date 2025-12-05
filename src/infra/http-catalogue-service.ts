@@ -1,39 +1,44 @@
 import type {
-  Review,
-  ReviewService,
-  AddReviewInput,
-  AddReviewOutput,
-  ListReviewsOutput,
-} from '../app/review-service';
+  CatalogueItem,
+  CatalogueService,
+  AddCatalogueItemInput,
+  AddCataloogueItemOutput,
+  ListCatalogueItemsOutput,
+} from '../app/catalogue-service';
 
-type ReviewDto = {
+type CatalogueItemDto = {
   id: string;
+  name: string;
+  category: string;
+  totalQuantity: number;
+  reservedQuantity: number;
   rating: number;
-  title: string;
-  comment: string;
+  status?: string;
+  metadata?: Record<string, unknown>;
   createdAt: string;
+  updatedAt: string;
 };
 
-type ListReviewsResponseDto =
-  | { reviews?: ReviewDto[]; totalCount?: number; errors?: string[] }
-  | ReviewDto[];
+type ListCatalogueItemsResponseDto =
+  | { catalogueItems?: CatalogueItemDto[]; totalCount?: number; errors?: string[] }
+  | CatalogueItemDto[];
 
-type AddReviewResponseDto = { review?: ReviewDto; errors?: string[] };
+type AddCatalogueItemResponseDto = { catalogueItem?: CatalogueItemDto; errors?: string[] };
 
 export type HttpClient = typeof fetch;
 
-export type HttpReviewServiceOptions = {
+export type HttpCatalogueServiceOptions = {
   readonly baseUrl?: string;
   readonly http?: HttpClient;
   readonly headers?: Record<string, string>;
 };
 
-export class HttpReviewService implements ReviewService {
+export class HttpCatalogueService implements CatalogueService {
   private readonly baseUrl?: string;
   private readonly http: HttpClient;
   private readonly headers: Record<string, string>;
 
-  constructor(options: HttpReviewServiceOptions = {}) {
+  constructor(options: HttpCatalogueServiceOptions = {}) {
     this.baseUrl = options.baseUrl
       ? options.baseUrl.replace(/\/$/, '')
       : undefined;
@@ -48,13 +53,13 @@ export class HttpReviewService implements ReviewService {
     this.headers = { ...(options.headers ?? {}) };
   }
 
-  async listReviews(): Promise<ListReviewsOutput> {
-    const res = await this.http(this.url('/reviews'), {
+  async listCatalogueItems(): Promise<ListCatalogueItemsOutput> {
+    const res = await this.http(this.url('/catalogue-items'), {
       method: 'GET',
       headers: this.mergeHeaders({ Accept: 'application/json' }),
     });
     await this.ensureOk(res);
-    const body = (await this.parseJson(res)) as ListReviewsResponseDto;
+    const body = (await this.parseJson(res)) as ListCatalogueItemsResponseDto;
 
     const errors = Array.isArray(body)
       ? undefined
@@ -63,23 +68,23 @@ export class HttpReviewService implements ReviewService {
         : undefined;
     if (errors && errors.length) throw new Error(errors.join('; '));
 
-    const reviews = Array.isArray(body)
+    const items = Array.isArray(body)
       ? body
-      : Array.isArray(body.reviews)
-        ? body.reviews
+      : Array.isArray(body.catalogueItems)
+        ? body.catalogueItems
         : [];
-    const mapped = reviews.map(toDomainReview);
+    const mapped = items.map(toDomainCatalogueItem);
     const totalCount = Array.isArray(body)
       ? mapped.length
       : typeof body.totalCount === 'number'
         ? body.totalCount
         : mapped.length;
-    return { reviews: mapped, totalCount };
+    return { catalogueItems: mapped, totalCount };
   }
 
-  async addReview(input: AddReviewInput): Promise<AddReviewOutput> {
-    const dto = toAddReviewRequestDto(input);
-    const res = await this.http(this.url('/reviews'), {
+  async addCatalogueItem(input: AddCatalogueItemInput): Promise<AddCataloogueItemOutput> {
+    const dto = toAddCatalogueItemRequestDto(input);
+    const res = await this.http(this.url('/catalogue-items'), {
       method: 'POST',
       headers: this.mergeHeaders({
         Accept: 'application/json',
@@ -88,16 +93,16 @@ export class HttpReviewService implements ReviewService {
       body: JSON.stringify(dto),
     });
     await this.ensureOk(res);
-    const body = (await this.parseJson(res)) as AddReviewResponseDto;
+    const body = (await this.parseJson(res)) as AddCatalogueItemResponseDto;
     if (Array.isArray(body.errors) && body.errors.length) {
       throw new Error(body.errors.join('; '));
     }
-    const reviewDto = body.review;
-    if (!reviewDto || typeof reviewDto !== 'object') {
-      throw new Error('Malformed add review response');
+    const itemDto = body.catalogueItem;
+    if (!itemDto || typeof itemDto !== 'object') {
+      throw new Error('Malformed add catalogue item response');
     }
-    const review = toDomainReview(reviewDto);
-    return { review };
+    const item = toDomainCatalogueItem(itemDto);
+    return { catalogueItem: item };
   }
 
   // helpers
@@ -142,35 +147,34 @@ export class HttpReviewService implements ReviewService {
   }
 }
 
-// Infra-level request DTO (decoupled from app AddReviewInput)
-type AddReviewRequestDto = {
-  rating: number;
-  title: string;
-  comment: string;
+// Infra-level request DTO (decoupled from app AddCatalogueItemInput)
+type AddCatalogueItemRequestDto = {
+  name: string;
+  category: string;
+  totalQuantity: number;
+  metadata?: Record<string, unknown>;
 };
 
-function toAddReviewRequestDto(input: AddReviewInput): AddReviewRequestDto {
+function toAddCatalogueItemRequestDto(input: AddCatalogueItemInput): AddCatalogueItemRequestDto {
   return {
-    rating: input.rating,
-    title: input.title,
-    comment: input.comment,
+    name: input.name,
+    category: input.category,
+    totalQuantity: input.totalQuantity,
+    metadata: input.metadata,
   };
 }
 
-function toDomainReview(r: ReviewDto): Review {
+function toDomainCatalogueItem(dto: CatalogueItemDto): CatalogueItem {
   return {
-    id: r.id,
-    rating: r.rating,
-    title: r.title,
-    comment: r.comment,
-    createdAt: toDate(r.createdAt),
+    id: dto.id,
+    name: dto.name,
+    category: dto.category,
+    totalQuantity: dto.totalQuantity,
+    reservedQuantity: dto.reservedQuantity,
+    rating: dto.rating,
+    status: dto.status,
+    metadata: dto.metadata,
+    createdAt: dto.createdAt,
+    updatedAt: dto.updatedAt,
   };
-}
-
-function toDate(v: string): Date {
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) {
-    throw new Error('Invalid createdAt date');
-  }
-  return d;
 }
