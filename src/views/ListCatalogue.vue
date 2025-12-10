@@ -60,7 +60,11 @@ onMounted(() => {
   <section class="page">
     <header class="page__header">
       <h1>Catalogue Items</h1>
-      <button @click="handleToggleForm" class="btn btn--add" :disabled="loading">
+      <button
+        @click="handleToggleForm"
+        class="btn btn--add"
+        :disabled="loading"
+      >
         {{ showForm ? 'Cancel' : '+ Add Item' }}
       </button>
     </header>
@@ -70,7 +74,9 @@ onMounted(() => {
       <span v-else>None yet</span>
     </div>
 
-    <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
+    <div v-if="successMessage" class="success-message">
+      {{ successMessage }}
+    </div>
 
     <AddCatalogueItemForm
       v-if="showForm"
