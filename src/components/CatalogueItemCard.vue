@@ -26,13 +26,13 @@ function formatDate(d: Date): string {
       <div class="card__title">{{ props.item.name }}</div>
       <div
         class="card__rating"
-        :aria-label="`Rating: ${props.item.rating} / 5`"
+        :aria-label="`Rating: ${props.item.totalQuantity} / 5`"
       >
         <span
           v-for="i in 5"
           :key="i"
           class="star"
-          :class="{ filled: i <= props.item.rating }"
+          :class="{ filled: i <= props.item.totalQuantity }"
           >★</span
         >
         <span class="sr-only">{{ props.item.rating }} out of 5</span>
@@ -42,11 +42,13 @@ function formatDate(d: Date): string {
       <p><strong>Category:</strong> {{ props.item.category }}</p>
       <p><strong>Total Quantity:</strong> {{ props.item.totalQuantity }}</p>
       <p><strong>Reserved:</strong> {{ props.item.reservedQuantity }}</p>
-      <p v-if="props.item.status"><strong>Status:</strong> {{ props.item.status }}</p>
+      <p v-if="props.item.status">
+        <strong>Status:</strong> {{ props.item.status }}
+      </p>
     </div>
     <footer class="card__footer">
       <time :dateTime="props.item.createdAt">{{
-        formatDate(new Date(props.item.createdAt))
+        formatDate(new Date(props.item.createdAt ?? 0))
       }}</time>
       <span class="card__id">#{{ props.item.id }}</span>
     </footer>
